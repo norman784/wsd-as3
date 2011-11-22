@@ -3,7 +3,7 @@ wsd-as3
 
 A simple library that helps you to create fast rich social media apps
 
-Markups
+Usage
 -------
 
 See the demo folder to understand how it works
