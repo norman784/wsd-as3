@@ -3,34 +3,46 @@
 	import com.wsd.display.Overlay;
 	import com.wsd.engine.AMF;
 	
-	import luaAlchemy.LuaAlchemy;
+	//import luaAlchemy.LuaAlchemy;
+	
+	import com.hurlant.crypto.CryptoCode;
 	
 	import flash.display.MovieClip;
 	import flash.events.Event;
 	import flash.events.ContextMenuEvent;
 	import flash.external.ExternalInterface;
-	import flash.net.URLRequest;
 	import flash.net.navigateToURL;
+	import flash.net.URLLoader;
+	import flash.system.Capabilities;
+	import flash.net.URLRequest;
+	import flash.net.URLVariables;
+	import flash.net.URLRequestMethod;
+	import flash.net.URLLoaderDataFormat;
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
 	
 	public class Base extends MovieClip
 	{
-		public static var 	DEBUG:Boolean				= false;
-		public static var 	LOG:Boolean					= false;
+		public static var 	DEBUG:Boolean				= true;
+		public static var 	LOG:Boolean					= true;
 		
 		public static var	app:Base;
+		public static var	config:XML;
+		//public static var 	lua:LuaAlchemy;
 		public static var	overlay:Overlay;
 		
 		public static var	constants:Object 			= new Object;
-		public static var 	lua:LuaAlchemy				= new LuaAlchemy();
+		public static var	platform					= null;
 		public static var	status:Object				= new Object;
 		
 		public var 			container:MovieClip 		= new MovieClip;
 		
-		public function Base(author_copyright = null, author_link = null, callBack = null):void
+		private var			callback					= null;
+		private var			xmlLoader:URLLoader 		= new URLLoader();
+		
+		public function Base(config_file, callback = null):void
 		{
-			Base.log('Base::Base(author_copyright = ' + author_copyright + ', author_link = ' + author_link + ')');
+			Base.log('Base::Base()');
 			
 			Base.app = this;
 			
@@ -38,41 +50,57 @@
 			Base.status.ERROR 	= AMF.ERROR;
 			Base.status.EXPIRED = AMF.EXPIRED;
 			
-			addEventListener(Event.ADDED_TO_STAGE, function(e:Event){
-				Base.overlay = new Overlay();
-				Base.overlay.hide();
-
-				set_contextual_menu(author_copyright, author_link);
-				
-				callBack();
-				
-				addChild(container);
-				addChild(Base.overlay);
+			Base.platform = Capabilities.playerType;
+			
+			this.callback = callback;
+			
+			addEventListener(Event.ADDED_TO_STAGE, function(e:Event){	
+				xmlLoader.addEventListener(Event.COMPLETE, init);
+				xmlLoader.load(new URLRequest(config_file));
 			});
 		}
 		
-		private function set_contextual_menu(author_copyright = null, author_link = null):void
+		private function init(e:Event):void {
+			Base.log('Base::showXML()');
+			
+			config = new XML(e.target.data);
+			
+			Base.DEBUG 	= config.app.debug == 'true' ? true : false;
+			Base.LOG 	= config.app.log == 'true' ? true : false;
+			
+			Base.overlay = new Overlay();
+			Base.overlay.hide();
+
+			set_contextual_menu(config.copyright, config.url);
+
+			if (callback != null ) callback();
+
+			addChild(container);
+			addChild(Base.overlay);
+		}
+		
+		private function set_contextual_menu(author_copyright = null, author_url = null):void
 		{
-			if (author_copyright == null || author_link == null) return;
+			if (author_copyright == null || author_url == null) return;
 			
 			var contextual_menu:ContextMenu = new ContextMenu();
 			contextual_menu.hideBuiltInItems();
 			
 			var copyright:ContextMenuItem = new ContextMenuItem(author_copyright);
 			copyright.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:Event){
-				navigateToURL(new URLRequest(author_link), '_blank');
+				navigateToURL(new URLRequest(author_url), '_blank');
 			});
 			contextual_menu.customItems.push(copyright);
 			this.contextMenu = contextual_menu;
 		}
 		
-		public static function AMFconnect(domain, gateway, params, callbackSuccess = null, callbackError = null, method:String = "modules.Main.initialize"):void
+		public static function AMFconnect(params, callbackSuccess = null, callbackError = null, method:String = "modules.Main.initialize"):void
 		{
-			Base.log('Base::AMFconnect(domain = ' + domain + ', gateway = ' + gateway + ')');
+			Base.log('Base::AMFconnect(domain = ' + config.proxy.domain + ', gateway = ' + config.proxy.gateway + ')');
 			
 			Base.constants.AMF = new Object;
-			Base.constants.AMF.domain = domain;
-			Base.constants.AMF.gateway = gateway;
+			Base.constants.AMF.domain = config.proxy.domain;
+			Base.constants.AMF.gateway = config.proxy.gateway;
 			
 			if (callbackSuccess == null) callbackSuccess = function( e:Event ) {
 				Base.log('Base::AMFconnect(response = ' + e.target.response.status + ')');
@@ -176,20 +204,53 @@
 		{
 			Base.log('Base::navigateToURL(url = ' + url + ', target = ' + target + ')');
 			
-			navigateToURL(new URLRequest(url), target);
+			flash.net.navigateToURL(new URLRequest(url), target);
+		}
+		
+		public static function post(url, data, encode:Boolean = false):void
+		{
+			Base.log('Base::post(url = ' + url + ', data = ' + data + ', encode = ' + encode + ')');
+			
+			var request:URLRequest = new URLRequest (url); 
+			request.method = URLRequestMethod.POST; 
+			
+			var variables:URLVariables = new URLVariables(); 
+			
+			if (encode == true) {
+				var crypto = new CryptoCode('olm');
+				for (var i in data)
+				{
+					variables[i] = crypto.encrypt(data[i]);
+					Base.log('Base::post(data[' + i + '] = ' + variables[i] + ')');
+				}
+			} else {
+				for (var i in data)
+				{
+					variables[i] = data[i];
+					Base.log('Base::post(data[' + i + '] = ' + data[i] + ')');
+				}
+			}
+			     
+			request.data = variables;
+
+			var loader:URLLoader = new URLLoader (request);
+			loader.dataFormat = URLLoaderDataFormat.TEXT; 
+			loader.load(request);
 		}
 		
 		public static function externalCall(method, params = null):void
 		{
-			Base.log('Base::externalCall(method = ' + method + ', params = ' + params + ')');
+			if (Base.platform != 'Plugin') return;
 			
+			Base.log('Base::externalCall(method = ' + method + ', params = ' + params + ')');
 			ExternalInterface.call(method, params);
 		}
 		
 		public static function addExternalCall(method, callback):void
 		{
-			Base.log('Base::addExternalCall(method = ' + method + ', callback = ' + callback + ')');
+			if (Base.platform != 'Plugin') return;
 			
+			Base.log('Base::addExternalCall(method = ' + method + ', callback = ' + callback + ')');
 			ExternalInterface.addCallback(method, callback);
 		}
 		
@@ -197,8 +258,13 @@
 		{
 			if (Base.LOG) {
 				trace(type + "::" + string);
-				ExternalInterface.call('console.log', type + "::" + string);
+				externalCall('console.log', type + "::" + string);
 			}
+		}
+		
+		public static function rand(low:Number=0, high:Number=1) :int
+		{
+			return Math.floor(Math.random() * (1+high-low)) + low;
 		}
 	}
 }
