@@ -3,8 +3,6 @@
 	import com.wsd.display.Overlay;
 	import com.wsd.engine.AMF;
 	
-	//import luaAlchemy.LuaAlchemy;
-	
 	import com.hurlant.crypto.CryptoCode;
 	
 	import flash.display.MovieClip;
@@ -27,8 +25,8 @@
 		public static var 	LOG:Boolean					= true;
 		
 		public static var	app:Base;
-		public static var	config:XML;
-		//public static var 	lua:LuaAlchemy;
+		public static var	config:Object;
+		public static var 	lua:Object;
 		public static var	overlay:Overlay;
 		
 		public static var	constants:Object 			= new Object;
@@ -40,11 +38,12 @@
 		private var			callback					= null;
 		private var			xmlLoader:URLLoader 		= new URLLoader();
 		
-		public function Base(config_file, callback = null):void
+		public function Base(config, callback = null):void
 		{
 			Base.log('Base::Base()');
 			
 			Base.app = this;
+			Base.config = config;
 			
 			Base.status.OK 		= AMF.OK;
 			Base.status.ERROR 	= AMF.ERROR;
@@ -54,26 +53,44 @@
 			
 			this.callback = callback;
 			
-			addEventListener(Event.ADDED_TO_STAGE, function(e:Event){	
-				xmlLoader.addEventListener(Event.COMPLETE, init);
-				xmlLoader.load(new URLRequest(config_file));
+			addEventListener(Event.ADDED_TO_STAGE, function(e:Event){
+				if (typeof(config) != 'string') {
+					init();
+				} else {
+					xmlLoader.addEventListener(Event.COMPLETE, initXML);
+					xmlLoader.load(new URLRequest(config));
+				}
 			});
 		}
 		
-		private function init(e:Event):void {
-			Base.log('Base::showXML()');
+		private function initXML(e:Event):void
+		{
+			Base.log('Base::initXML()');
 			
-			config = new XML(e.target.data);
+			Base.config = new XML(e.target.data);
 			
-			Base.DEBUG 	= config.app.debug == 'true' ? true : false;
-			Base.LOG 	= config.app.log == 'true' ? true : false;
+			init();
+		}
+		
+		private function init():void
+		{
+			Base.log('Base::init()');
+			
+			if (Base.config.app != null) {
+				Base.DEBUG 	= Base.config.app.debug == 'true' ? true : false;
+				Base.LOG 	= Base.config.app.log == 'true' ? true : false;
+			} else {
+				Base.DEBUG 	= false;
+				Base.LOG 	= false;
+			}
 			
 			Base.overlay = new Overlay();
 			Base.overlay.hide();
-
-			set_contextual_menu(config.copyright, config.url);
-
-			if (callback != null ) callback();
+			
+			if (Base.config.copyright != null && Base.config.url != null)
+				set_contextual_menu(Base.config.copyright, Base.config.url);
+			
+			if (callback != null) callback();
 
 			addChild(container);
 			addChild(Base.overlay);
@@ -96,11 +113,11 @@
 		
 		public static function AMFconnect(params, callbackSuccess = null, callbackError = null, method:String = "modules.Main.initialize"):void
 		{
-			Base.log('Base::AMFconnect(domain = ' + config.proxy.domain + ', gateway = ' + config.proxy.gateway + ')');
+			Base.log('Base::AMFconnect(domain = ' + Base.config.proxy.domain + ', gateway = ' + Base.config.proxy.gateway + ')');
 			
 			Base.constants.AMF = new Object;
-			Base.constants.AMF.domain = config.proxy.domain;
-			Base.constants.AMF.gateway = config.proxy.gateway;
+			Base.constants.AMF.domain = Base.config.proxy.domain;
+			Base.constants.AMF.gateway = Base.config.proxy.gateway;
 			
 			if (callbackSuccess == null) callbackSuccess = function( e:Event ) {
 				Base.log('Base::AMFconnect(response = ' + e.target.response.status + ')');
@@ -214,17 +231,18 @@
 			var request:URLRequest = new URLRequest (url); 
 			request.method = URLRequestMethod.POST; 
 			
-			var variables:URLVariables = new URLVariables(); 
+			var variables:URLVariables = new URLVariables();
+			var i;
 			
 			if (encode == true) {
 				var crypto = new CryptoCode('olm');
-				for (var i in data)
+				for (i in data)
 				{
 					variables[i] = crypto.encrypt(data[i]);
 					Base.log('Base::post(data[' + i + '] = ' + variables[i] + ')');
 				}
 			} else {
-				for (var i in data)
+				for (i in data)
 				{
 					variables[i] = data[i];
 					Base.log('Base::post(data[' + i + '] = ' + data[i] + ')');

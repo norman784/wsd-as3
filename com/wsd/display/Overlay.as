@@ -1,9 +1,10 @@
-package com.wsd.display
+﻿package com.wsd.display
 {
 	import com.wsd.View;
 	
 	import flash.display.Shape;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
 	import flash.text.TextFormatAlign;
@@ -66,10 +67,21 @@ package com.wsd.display
 			addChild(txtMsg);
 		}
 		
-		public function show(msg:String):void
+		public function show(msg:String, hideOnClick:Boolean = false):void
 		{
 			visible = true;
 			txtMsg.text = msg;
+			
+			if (hideOnClick == false) return;
+			
+			var _this = this;
+			var callback = function( e:MouseEvent ):void
+			{
+				_this.hide();
+				_this.removeEventListener(MouseEvent.CLICK, callback);
+			}
+			
+			addEventListener(MouseEvent.CLICK, callback);
 		}
 		
 		public function hide():void
