@@ -66,7 +66,7 @@ package com.wsd.display
 			addChild(txtMsg);
 		}
 		
-		public function show(msg:String, dsad:Boolean = false):void
+		public function show(msg:String):void
 		{
 			visible = true;
 			txtMsg.text = msg;
