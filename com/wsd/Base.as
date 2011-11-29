@@ -25,6 +25,7 @@
 		public static var 	LOG:Boolean					= true;
 		
 		public static var	app:Base;
+		public static var	_stage:*;
 		public static var	config:Object;
 		public static var 	lua:Object;
 		public static var	overlay:Overlay;
@@ -38,7 +39,7 @@
 		private var			callback					= null;
 		private var			xmlLoader:URLLoader 		= new URLLoader();
 		
-		public function Base(config, callback = null):void
+		public function Base(config:*, callback = null):void
 		{
 			Base.log('Base::Base()');
 			
@@ -63,7 +64,7 @@
 			});
 		}
 		
-		private function initXML(e:Event):void
+		private function initXML( e:Event = null ):void
 		{
 			Base.log('Base::initXML()');
 			
@@ -74,11 +75,18 @@
 		
 		private function init():void
 		{
+			Base._stage = stage;
 			Base.log('Base::init()');
 			
-			if (Base.config.app != null) {
-				Base.DEBUG 	= Base.config.app.debug == 'true' ? true : false;
-				Base.LOG 	= Base.config.app.log == 'true' ? true : false;
+			if (Base.config) {
+				if (Base.config.app != null) {
+					Base.DEBUG 	= Base.config.app.debug == 'true' ? true : false;
+					Base.LOG 	= Base.config.app.log == 'true' ? true : false;
+				}
+				
+				if (Base.config.copyright != null && Base.config.url != null) {
+					set_contextual_menu(Base.config.copyright, Base.config.url);
+				}
 			} else {
 				Base.DEBUG 	= false;
 				Base.LOG 	= false;
@@ -86,9 +94,6 @@
 			
 			Base.overlay = new Overlay();
 			Base.overlay.hide();
-			
-			if (Base.config.copyright != null && Base.config.url != null)
-				set_contextual_menu(Base.config.copyright, Base.config.url);
 			
 			if (callback != null) callback();
 
@@ -169,7 +174,7 @@
 			service.call(method, params);
 		}
 		
-		public static function add(child, name = 'main', clearAll:Boolean = true):void
+		public static function add(child:*, name = 'main', clearAll:Boolean = true):void
 		{
 			if (clearAll == true) Base.removeAll();
 			
@@ -177,6 +182,25 @@
 			
 			Base.app.container.addChild(child);
 			child.name = name;
+		}
+		
+		public static function center(child:*, alignV:Boolean = true, alignH:Boolean = true):void
+		{
+			var mc:* = MovieClip(Base.app.container.getChildByName(child));
+			
+			Base.log('Base::center(childName = ' + child + ', alignV = ' + alignV + ', alignH = ' + alignH + ')', (mc == null ? 'ERROR' : ''));
+			Base.log('Base::_stage = ' + Base._stage);
+			
+			if (mc == null) return;
+			/*
+			if (alignV) {
+				mc.y = Base._stage.height / 2 - mc.height / 2;
+			}
+			
+			if (alignH) {
+				mc.x = Base._stage.width / 2 - mc.width / 2;
+			}
+			*/
 		}
 		
 		public static function remove(name):void
