@@ -41,7 +41,7 @@
 		
 		public function Base(config:*, callback = null):void
 		{
-			Base.log('Base::Base()');
+			Base.log('Base::Base(config: ' + config + ', callback ' + callback + ')');
 			
 			Base.app = this;
 			Base.config = config;
@@ -256,10 +256,17 @@
 			request.method = URLRequestMethod.POST; 
 			
 			var variables:URLVariables = new URLVariables();
-			var i;
+			var i:*;
+			var hash:String = 'olm';
+			
+			if (Base.config != null) {
+				if (Base.config.app != null) {
+					if (Base.config.app.hash != null) hash = Base.config.app.hash;
+				}
+			}
 			
 			if (encode == true) {
-				var crypto = new CryptoCode('olm');
+				var crypto = new CryptoCode(hash);
 				for (i in data)
 				{
 					variables[i] = crypto.encrypt(data[i]);
