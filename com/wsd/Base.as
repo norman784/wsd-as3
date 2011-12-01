@@ -1,21 +1,20 @@
 ﻿package com.wsd
 {
+	import com.hurlant.crypto.CryptoCode;
 	import com.wsd.display.Overlay;
 	import com.wsd.engine.AMF;
 	
-	import com.hurlant.crypto.CryptoCode;
-	
 	import flash.display.MovieClip;
-	import flash.events.Event;
 	import flash.events.ContextMenuEvent;
+	import flash.events.Event;
 	import flash.external.ExternalInterface;
-	import flash.net.navigateToURL;
 	import flash.net.URLLoader;
-	import flash.system.Capabilities;
-	import flash.net.URLRequest;
-	import flash.net.URLVariables;
-	import flash.net.URLRequestMethod;
 	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
+	import flash.net.URLRequestMethod;
+	import flash.net.URLVariables;
+	import flash.net.navigateToURL;
+	import flash.system.Capabilities;
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
 	
@@ -62,7 +61,7 @@
 					xmlLoader.load(new URLRequest(config));
 				}
 			});
-		}
+		} // Base()
 		
 		private function initXML( e:Event = null ):void
 		{
@@ -71,7 +70,7 @@
 			Base.config = new XML(e.target.data);
 			
 			init();
-		}
+		} // initXML()
 		
 		private function init():void
 		{
@@ -99,7 +98,7 @@
 
 			addChild(container);
 			addChild(Base.overlay);
-		}
+		} // init()
 		
 		private function set_contextual_menu(author_copyright = null, author_url = null):void
 		{
@@ -114,7 +113,7 @@
 			});
 			contextual_menu.customItems.push(copyright);
 			this.contextMenu = contextual_menu;
-		}
+		} // set_contextual_menu()
 		
 		public static function AMFconnect(params, callbackSuccess = null, callbackError = null, method:String = "modules.Main.initialize"):void
 		{
@@ -144,7 +143,7 @@
 			service.addEventListener('success', callbackSuccess);
 			service.addEventListener('error', callbackError);
 			service.call(method, params);
-		}
+		} // AMFconnect
 		
 		public static function AMFcall(method, params, callbackSuccess = null, callbackError = null):void
 		{
@@ -172,7 +171,7 @@
 			service.addEventListener('success', callbackSuccess);
 			service.addEventListener('error', callbackError);
 			service.call(method, params);
-		}
+		} // AMFcall()
 		
 		public static function add(child:*, name = 'main', clearAll:Boolean = true):void
 		{
@@ -182,7 +181,7 @@
 			
 			Base.app.container.addChild(child);
 			child.name = name;
-		}
+		} // add()
 		
 		public static function center(child:*, alignV:Boolean = true, alignH:Boolean = true):void
 		{
@@ -201,14 +200,14 @@
 				mc.x = Base._stage.width / 2 - mc.width / 2;
 			}
 			*/
-		}
+		} // center()
 		
 		public static function remove(name):void
 		{
 			Base.log('Base::remove(name = ' + name + ')');
 			
 			Base.app.container.removeChild( Base.app.container.getChildByName(name) );
-		}
+		} // remove()
 		
 		public static function removeAll():void
 		{
@@ -223,32 +222,30 @@
 				Base.app.container.removeChildAt(Base.app.container.numChildren-1);
 				++count;
 			}
-			
-			//Base.log('Base::removeAll(removed ' + count + ' / ' + total + ' | ' + Base.app.container.numChildren + ' apps left)');
-		}
+		} // removeAll()
 		
 		public static function hide(name):void
 		{
 			Base.log('Base::hide(name = ' + name + ')');
 			
 			Base.app.container.getChildByName(name).visible = false;
-		}
+		} // hide()
 		
 		public static function show(name):void
 		{
 			Base.log('Base::show(name = ' + name + ')');
 			
 			Base.app.container.getChildByName(name).visible = true;
-		}
+		} // show()
 		
 		public static function navigateToURL(url, target:String = '_self'):void
 		{
 			Base.log('Base::navigateToURL(url = ' + url + ', target = ' + target + ')');
 			
 			flash.net.navigateToURL(new URLRequest(url), target);
-		}
+		} // navigateToURL()
 		
-		public static function post(url, data, encode:Boolean = false):void
+		public static function post(url:String, data:*, encode:Boolean = false):void
 		{
 			Base.log('Base::post(url = ' + url + ', data = ' + data + ', encode = ' + encode + ')');
 			
@@ -281,11 +278,18 @@
 			}
 			     
 			request.data = variables;
-
+			
+			var postCallback:Function = function( e:Event ):void
+			{
+				Base.log('Base::post response = ' + e.target.data);
+				loader.removeEventListener(Event.COMPLETE, postCallback);
+			}
+			
 			var loader:URLLoader = new URLLoader (request);
-			loader.dataFormat = URLLoaderDataFormat.TEXT; 
+			loader.dataFormat = URLLoaderDataFormat.TEXT;
+			loader.addEventListener(Event.COMPLETE, postCallback);
 			loader.load(request);
-		}
+		} // post()
 		
 		public static function externalCall(method, params = null):void
 		{
@@ -293,7 +297,7 @@
 			
 			Base.log('Base::externalCall(method = ' + method + ', params = ' + params + ')');
 			ExternalInterface.call(method, params);
-		}
+		} // externalCall()
 		
 		public static function addExternalCall(method, callback):void
 		{
@@ -301,7 +305,7 @@
 			
 			Base.log('Base::addExternalCall(method = ' + method + ', callback = ' + callback + ')');
 			ExternalInterface.addCallback(method, callback);
-		}
+		} // addExternalCall()
 		
 		public static function log(string, type = 'INFO'):void
 		{
@@ -309,11 +313,25 @@
 				trace(type + "::" + string);
 				externalCall('console.log', type + "::" + string);
 			}
-		}
+		} // log()
 		
 		public static function rand(low:Number=0, high:Number=1) :int
 		{
 			return Math.floor(Math.random() * (1+high-low)) + low;
-		}
+		} // rand()
+		
+		public static function var_dump(object, tab:int = 0):void {
+			if (object == null) return;
+			var tabDeep:String = '';
+			for (var i:int = 0; i < tab; ++i) 	tabDeep += '	';
+			
+			Base.log(tabDeep + '	' + typeof(object) + ' => ' + object, 'VAR_DUMP');
+			
+			for (var key:String in object)
+			{
+				Base.log(tabDeep + '	' + key, 'VAR_DUMP');
+				Base.var_dump(object[key], tab+1);
+			}
+		} // var_dump()
 	}
 }

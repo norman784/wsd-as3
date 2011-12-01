@@ -1,27 +1,1 @@
-package com.wsd
-{
-	import flash.display.MovieClip;
-	import flash.net.SharedObject;
-	
-	public class Recordset extends MovieClip
-	{
-		public static var userData:SharedObject = SharedObject.getLocal('UserData');
-		
-		public function Recordset():void
-		{
-			
-		}
-		
-		public static function set(table:String, data:Object):void
-		{
-			userData.data[table] = data;
-			userData.flush();
-		}
-		
-		public static function get(table:String):void
-		{
-			if (userData.data[table] == null) userData.data[table] = new Object;
-			return userData.data[table];
-		}
-	}
-}
+﻿package com.wsd{	import flash.display.MovieClip;	import flash.net.SharedObject;		public class Recordset extends MovieClip	{		public static var userData:SharedObject = SharedObject.getLocal('UserData');				public function Recordset():void		{					}				public static function set(table:String, data:*, index:* = null):void		{			if (userData.data[table] == null) 	userData.data[table] 			= [];			if (index != null) 					userData.data[table][index] 	= data;			else								userData.data[table] 			= data;						userData.flush();		}				public static function get(table:String, index:* = null):*		{			var data;						if (userData.data[table] == null) 	userData.data[table] = []; 			if (index != null) 					data = userData.data[table][index];			else								data = userData.data[table];						if (data == null) data = new Object;						return data;		}				public static function push(table:String, data:*):void		{			if (userData.data[table] == null) 	userData.data[table] = [];			userData.data[table].push(data);			userData.flush();		}				public static function len(table:String):int		{			if (userData.data[table] == null) 	userData.data[table] 			= [];			return userData.data[table].length;		}	}}

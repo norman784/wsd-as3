@@ -1,2 +1,9 @@
 
 demo/simple_demo.swf
+tmpl/graffiti/objects/Canvas.as
+
+tmpl/graffiti/objects/Post.as
+
+tmpl/graffiti/objects/Toolbar.as
+
+tmpl/graffiti/view/Game.as
