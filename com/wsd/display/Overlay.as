@@ -67,20 +67,21 @@
 			addChild(txtMsg);
 		}
 		
-		public function show(msg:String, hideOnClick:Boolean = false):void
+		public function show(msg:String, hideOnClick:* = false):void
 		{
 			visible = true;
 			txtMsg.text = msg;
 			
 			if (hideOnClick == false) return;
 			
-			var _this = this;
+			var _this = this
 			var callback = function( e:MouseEvent ):void
 			{
+				if (typeof(hideOnClick) == 'function') hideOnClick()
 				_this.hide();
 				_this.removeEventListener(MouseEvent.CLICK, callback);
 			}
-			
+
 			addEventListener(MouseEvent.CLICK, callback);
 		}
 		
