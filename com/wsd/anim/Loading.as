@@ -1,0 +1,1 @@
+﻿package com.wsd.anim{	import com.wsd.anim.Loading;	import com.wsd.View;		import flash.display.Shape;	import flash.events.Event;		public class Loading extends View	{		private var slots:Array = []				public function Loading()		{					}	}}
