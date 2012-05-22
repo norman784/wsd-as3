@@ -93,7 +93,7 @@ package com.wsd.display
 			_this.removeChild(button)
 		}
 		
-		button.addEventListener(MouseEvent.CLICK, callback)
+		button.addEventListener(MouseEvent.CLICK, callback, false, 0, true)
 		*/
 	}
 }
