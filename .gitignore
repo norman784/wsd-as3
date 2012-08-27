@@ -27,3 +27,9 @@ com/logosware/event/.svn/text-base/QRreaderEvent.as.svn-base
 com/logosware/utils/.svn/entries
 
 com/logosware/utils/.svn/text-base/LabelingClass.as.svn-base
+
+com/wsd/engine/Chroma.as
+
+com/wsd/events/FacebookEvent.as
+
+com/wsd/net/Facebook.as
